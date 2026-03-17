@@ -26,8 +26,8 @@ PACKAGES=(
   termux-api
 )
 
-pkg update >/dev/null 2>&1 || true
-pkg upgrade >/dev/null 2>&1 || true
+pkg update -y >/dev/null 2>&1 || true
+pkg upgrade -y >/dev/null 2>&1 || true
 
 for p in "${PACKAGES[@]}"; do
   if pkg install -y "$p" >/dev/null 2>&1; then
@@ -37,27 +37,22 @@ for p in "${PACKAGES[@]}"; do
   fi
 done
 
-if command -v npm >/dev/null 2>&1; then
-  export NPM_PREFIX="$HOME/.npm-global"
-  mkdir -p "$NPM_PREFIX"
-  npm config set prefix "$NPM_PREFIX" >/dev/null 2>&1 || true
-fi
+export NPM_PREFIX="$HOME/.npm-global"
+mkdir -p "$NPM_PREFIX" >/dev/null 2>&1
+npm config set prefix "$NPM_PREFIX" >/dev/null 2>&1 || true
 
 SHELL_RC=""
-if [ -n "${ZDOTDIR-}" ]; then
-  SHELL_RC="$ZDOTDIR/.zshrc"
-elif [ -f "$HOME/.zshrc" ]; then
+if [ -n "${ZDOTDIR-}" ] || [ -f "$HOME/.zshrc" ]; then
   SHELL_RC="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then
+elif [ -f "$HOME/.bashrc" ] || [ -n "${BASH_VERSION-}" ]; then
   SHELL_RC="$HOME/.bashrc"
 else
   SHELL_RC="$HOME/.profile"
 fi
 
-mkdir -p "$(dirname "$SHELL_RC")"
-: > "$SHELL_RC"
+grep -qxF 'export PATH="$HOME/.npm-global/bin:$PATH"' "$SHELL_RC" 2>/dev/null || cat >> "$SHELL_RC" <<'EOF'
 
-grep -qxF 'export PATH="$HOME/.npm-global/bin:$PATH"' "$SHELL_RC" 2>/dev/null \
-  || printf '\n# npm global path\nexport PATH="$HOME/.npm-global/bin:$PATH"\n' >> "$SHELL_RC"
+export PATH="$HOME/.npm-global/bin:$PATH"
+EOF
 
 printf "Done\n"
