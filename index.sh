@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
-
-ts_prefix() {
-  while IFS= read -r line || [ -n "$line" ]; do
-    printf '%s %s\n' "$(timestamp)" "$line"
-  done
-}
-
 PACKAGES=(
   coreutils
   git
@@ -34,23 +26,21 @@ PACKAGES=(
   termux-api
 )
 
-pkg update 2>&1 | ts_prefix || true
-pkg upgrade 2>&1 | ts_prefix || true
+pkg update >/dev/null 2>&1 || true
+pkg upgrade >/dev/null 2>&1 || true
 
 for p in "${PACKAGES[@]}"; do
-  if pkg install -y "$p" 2>&1 | ts_prefix; then
-    printf '%s %s: installed\n' "$(timestamp)" "$p"
+  if pkg install -y "$p" >/dev/null 2>&1; then
+    printf "%s: installed\n" "$p"
   else
-    rc=${PIPESTATUS[0]:-1}
-    printf '%s ERROR: %s failed to install (exit %d)\n' "$(timestamp)" "$p" "$rc" >&2
+    printf "ERROR: %s failed to install\n" "$p" >&2
   fi
 done
 
 if command -v npm >/dev/null 2>&1; then
   export NPM_PREFIX="$HOME/.npm-global"
   mkdir -p "$NPM_PREFIX"
-  npm config set prefix "$NPM_PREFIX" 2>&1 | ts_prefix || true
-  printf '%s npm configured with prefix %s\n' "$(timestamp)" "$NPM_PREFIX"
+  npm config set prefix "$NPM_PREFIX" >/dev/null 2>&1 || true
 fi
 
 SHELL_RC=""
@@ -70,4 +60,4 @@ mkdir -p "$(dirname "$SHELL_RC")"
 grep -qxF 'export PATH="$HOME/.npm-global/bin:$PATH"' "$SHELL_RC" 2>/dev/null \
   || printf '\n# npm global path\nexport PATH="$HOME/.npm-global/bin:$PATH"\n' >> "$SHELL_RC"
 
-printf '%s Done\n' "$(timestamp)"
+printf "Done\n"
