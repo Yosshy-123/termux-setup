@@ -27,20 +27,25 @@ PACKAGES=(
   termux-api
 )
 
-pkg update -y
-pkg upgrade -y
+# Update and upgrade (auto-yes)
+pkg update -y >/dev/null 2>&1 || true
+pkg upgrade -y >/dev/null 2>&1 || true
 
+# Install packages; report success or failure per package
 for p in "${PACKAGES[@]}"; do
-  echo "-> $p"
-  pkg install -y "$p" || {
-    echo "パッケージ $p のインストールに失敗しました。続行します..."
-  }
+  if pkg install -y "$p" >/dev/null 2>&1; then
+    printf "%s: installed\n" "$p"
+  else
+    printf "ERROR: %s failed to install\n" "$p" >&2
+  fi
 done
 
+# npm global prefix
 export NPM_PREFIX="$HOME/.npm-global"
-mkdir -p "$NPM_PREFIX"
-npm config set prefix "$NPM_PREFIX" || true
+mkdir -p "$NPM_PREFIX" >/dev/null 2>&1
+npm config set prefix "$NPM_PREFIX" >/dev/null 2>&1 || true
 
+# Choose shell rc file
 SHELL_RC=""
 if [ -n "${ZDOTDIR-}" ] || [ -f "$HOME/.zshrc" ]; then
   SHELL_RC="$HOME/.zshrc"
@@ -50,23 +55,25 @@ else
   SHELL_RC="$HOME/.profile"
 fi
 
+# Ensure npm global path is in shell rc
 grep -qxF 'export PATH="$HOME/.npm-global/bin:$PATH"' "$SHELL_RC" 2>/dev/null || cat >> "$SHELL_RC" <<'EOF'
 
-# npm global path for Termux
+# npm global path
 export PATH="$HOME/.npm-global/bin:$PATH"
 EOF
 
+# Git config defaults (quiet)
 if ! git config --global user.name >/dev/null 2>&1; then
-  git config --global user.name "termux-user"
+  git config --global user.name "termux-user" >/dev/null 2>&1 || true
 fi
 if ! git config --global user.email >/dev/null 2>&1; then
-  git config --global user.email "user@local"
+  git config --global user.email "user@local" >/dev/null 2>&1 || true
 fi
 
-echo "=== 動作確認 ==="
-command -v node >/dev/null 2>&1 && echo "node: $(node -v)"
-command -v npm >/dev/null 2>&1 && echo "npm: $(npm -v)"
-command -v yarn >/dev/null 2>&1 && echo "yarn: $(yarn -v)"
-command -v git >/dev/null 2>&1 && echo "git: $(git --version)"
+# Brief verification output
+command -v node >/dev/null 2>&1 && printf "node: %s\n" "$(node -v)"
+command -v npm >/dev/null 2>&1 && printf "npm: %s\n" "$(npm -v)"
+command -v yarn >/dev/null 2>&1 && printf "yarn: %s\n" "$(yarn -v)"
+command -v git >/dev/null 2>&1 && printf "git: %s\n" "$(git --version)"
 
-echo "完了"
+printf "Done\n"
