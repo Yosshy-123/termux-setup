@@ -5,7 +5,6 @@ PACKAGES=(
   coreutils
   git
   openssh
-  nodejs
   nodejs-lts
   yarn
   python
@@ -61,19 +60,5 @@ grep -qxF 'export PATH="$HOME/.npm-global/bin:$PATH"' "$SHELL_RC" 2>/dev/null ||
 # npm global path
 export PATH="$HOME/.npm-global/bin:$PATH"
 EOF
-
-# Git config defaults (quiet)
-if ! git config --global user.name >/dev/null 2>&1; then
-  git config --global user.name "termux-user" >/dev/null 2>&1 || true
-fi
-if ! git config --global user.email >/dev/null 2>&1; then
-  git config --global user.email "user@local" >/dev/null 2>&1 || true
-fi
-
-# Brief verification output
-command -v node >/dev/null 2>&1 && printf "node: %s\n" "$(node -v)"
-command -v npm >/dev/null 2>&1 && printf "npm: %s\n" "$(npm -v)"
-command -v yarn >/dev/null 2>&1 && printf "yarn: %s\n" "$(yarn -v)"
-command -v git >/dev/null 2>&1 && printf "git: %s\n" "$(git --version)"
 
 printf "Done\n"
