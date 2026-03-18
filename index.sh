@@ -2,24 +2,21 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-LOGFILE="$HOME/termux_install.log"
-: >"$LOGFILE"
-
 _on_error() {
   local exit_code=$?
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: Exit $exit_code at line ${BASH_LINENO[0]}" | tee -a "$LOGFILE" >&2
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: Exit $exit_code at line ${BASH_LINENO[0]}" >&2
   exit "$exit_code"
 }
 trap _on_error ERR
 
 _on_interrupt() {
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] INTERRUPTED" | tee -a "$LOGFILE"
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] INTERRUPTED"
   exit 130
 }
 trap _on_interrupt INT TERM
 
 log() {
-  printf '[%s] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" | tee -a "$LOGFILE"
+  printf '[%s] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*"
 }
 
 if ! command -v pkg >/dev/null 2>&1; then
@@ -28,11 +25,11 @@ if ! command -v pkg >/dev/null 2>&1; then
 fi
 
 log "running pkg update/upgrade"
-if ! pkg update -y >>"$LOGFILE" 2>&1; then
+if ! pkg update -y; then
   log "pkg update failed; attempting apt update"
-  apt update -y >>"$LOGFILE" 2>&1 || log "apt update failed"
+  apt update -y || log "apt update failed"
 fi
-pkg upgrade -y >>"$LOGFILE" 2>&1 || log "pkg upgrade returned non-zero"
+pkg upgrade -y || log "pkg upgrade returned non-zero"
 
 PACKAGES=(
   coreutils
@@ -67,13 +64,13 @@ install_with_retries() {
 
   while (( attempt <= max_attempts )); do
     log "installing ${pkgname} (attempt ${attempt}/${max_attempts})"
-    if pkg install -y "${pkgname}" >>"$LOGFILE" 2>&1; then
+    if pkg install -y "${pkgname}"; then
       log "installed ${pkgname} via pkg"
       return 0
     fi
 
     log "pkg install ${pkgname} failed; trying apt"
-    if apt install -y "${pkgname}" >>"$LOGFILE" 2>&1; then
+    if apt install -y "${pkgname}"; then
       log "installed ${pkgname} via apt"
       return 0
     fi
